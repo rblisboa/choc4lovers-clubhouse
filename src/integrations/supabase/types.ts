@@ -481,6 +481,7 @@ export type Database = {
           discount_amount: number
           id: string
           lead_id: string | null
+          next_renewal_date: string | null
           notes: string | null
           order_date: string
           paid_at: string | null
@@ -500,6 +501,7 @@ export type Database = {
           discount_amount?: number
           id?: string
           lead_id?: string | null
+          next_renewal_date?: string | null
           notes?: string | null
           order_date?: string
           paid_at?: string | null
@@ -519,6 +521,7 @@ export type Database = {
           discount_amount?: number
           id?: string
           lead_id?: string | null
+          next_renewal_date?: string | null
           notes?: string | null
           order_date?: string
           paid_at?: string | null
