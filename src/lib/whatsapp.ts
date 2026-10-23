@@ -20,7 +20,7 @@ export function leadWhatsAppMessage(l: {
 }): string {
   const prefs = [...l.preferences, ...(l.surprise_me ? ["Quero ser surpreendido"] : [])];
   return [
-    "Olá, Choc4lovers! Acabei de montar meu plano pelo site e gostaria de conversar sobre minha caixa de chocolates.",
+    "Olá, Choc4lovers! Acabei de montar meu plano pelo site.",
     "",
     `Nome: ${l.full_name}`,
     `Preferências: ${prefs.length ? prefs.join(", ") : "A definir"}`,
@@ -30,6 +30,6 @@ export function leadWhatsAppMessage(l: {
     `Cidade/UF: ${l.city}/${l.state}`,
     `Código da solicitação: ${l.code}`,
     "",
-    "Podemos conversar sobre as opções disponíveis?",
+    "Gostaria de conversar sobre a disponibilidade, o valor final e a entrega.",
   ].join("\n");
 }
