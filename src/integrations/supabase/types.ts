@@ -817,6 +817,24 @@ export type Database = {
           },
         ]
       }
+      submission_rate_limits: {
+        Row: {
+          attempts: number
+          bucket_key: string
+          window_start: string
+        }
+        Insert: {
+          attempts?: number
+          bucket_key: string
+          window_start?: string
+        }
+        Update: {
+          attempts?: number
+          bucket_key?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           activated_at: string | null
@@ -939,6 +957,10 @@ export type Database = {
     Functions: {
       admin_exists: { Args: never; Returns: boolean }
       claim_first_admin: { Args: never; Returns: boolean }
+      consume_submission_limit: {
+        Args: { _bucket: string; _max: number }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
