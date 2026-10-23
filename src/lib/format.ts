@@ -46,7 +46,7 @@ export function formatPhoneBR(e164: string | null | undefined): string {
 
 export function toCSV(rows: Record<string, unknown>[]): string {
   if (!rows.length) return "";
-  const headers = Object.keys(rows[0]);
+  const headers = Object.keys(rows[0] ?? {});
   const esc = (v: unknown) => {
     const s = v === null || v === undefined ? "" : Array.isArray(v) ? v.join("; ") : String(v);
     return /[";\n,]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
