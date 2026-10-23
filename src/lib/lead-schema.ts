@@ -31,9 +31,7 @@ export const leadSchema = z.object({
     errorMap: () => ({ message: "Escolha uma frequência" }),
   }),
   quantity: z.string().trim().max(60).optional().default(""),
-  presentation: z.enum(["presenteavel", "consumo_proprio"], {
-    errorMap: () => ({ message: "Escolha uma opção" }),
-  }),
+  presentation: z.enum(["presenteavel", "consumo_proprio"]).optional(),
   plan_notes: z.string().trim().max(1000).optional().default(""),
   full_name: z.string().trim().min(3, "Informe seu nome completo").max(120),
   email: z.string().trim().toLowerCase().email("E-mail inválido").max(160),
