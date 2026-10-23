@@ -132,7 +132,7 @@ function Index() {
               ["Quanto custa a entrega?", "O valor da entrega depende da sua região e é informado pela equipe antes da confirmação."],
               ["Posso alterar ou renovar meu plano?", "Sim. Basta conversar com a equipe para ajustar preferências, orçamento ou frequência e combinar a próxima caixa."],
               ["Tenho alergia ou restrição alimentar. E agora?", "Informe nas observações e confirme ingredientes e possíveis traços com a equipe antes de fechar o pedido."],
-            ].map(([q, a]) => (
+            ].map(([q = "", a]) => (
               <AccordionItem key={q} value={q}>
                 <AccordionTrigger className="text-left text-base font-semibold">{q}</AccordionTrigger>
                 <AccordionContent className="text-muted-foreground">{a}</AccordionContent>
