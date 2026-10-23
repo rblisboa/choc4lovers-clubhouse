@@ -56,6 +56,10 @@ export const leadSchema = z.object({
     errorMap: () => ({ message: "É necessário concordar com a política de privacidade" }),
   }),
   consent_marketing: z.boolean().default(false),
+}).superRefine((data, ctx) => {
+  if (!data.preferences.length && !data.surprise_me) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["preferences"], message: "Escolha ao menos uma preferência" });
+  }
 });
 
 export type LeadInput = z.input<typeof leadSchema>;
