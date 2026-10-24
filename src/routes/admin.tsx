@@ -15,7 +15,7 @@ export const Route = createFileRoute("/admin")({
     if (error || !staff) throw redirect({ to: "/admin/login" });
     return { userEmail: data.user.email ?? "" };
   },
-  head: () => ({ meta: [{ title: "Painel — Choc4lovers" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Painel — Choc4lovers" }, { name: "description", content: "Administração restrita Choc4lovers." }, { property: "og:title", content: "Painel — Choc4lovers" }, { property: "og:description", content: "Administração restrita Choc4lovers." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" }] }),
   component: AdminLayout,
 });
 

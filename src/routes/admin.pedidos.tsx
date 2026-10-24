@@ -13,7 +13,7 @@ import { PAYMENT_STATUS } from "@/lib/labels";
 import { ORDER_STATUS_MVP } from "@/lib/settings";
 import { brl, dateBR, todaySP } from "@/lib/format";
 
-export const Route = createFileRoute("/admin/pedidos")({ component: Pedidos });
+export const Route = createFileRoute("/admin/pedidos")({ head: () => ({ meta: [{ title: "Pedidos — Choc4lovers" }, { name: "description", content: "Pedidos e pagamentos manuais Choc4lovers." }, { property: "og:title", content: "Pedidos — Choc4lovers" }, { property: "og:description", content: "Pedidos e pagamentos manuais Choc4lovers." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" }] }), component: Pedidos });
 
 type O = { id: string; code: string; customer_id: string; order_date: string; products_amount: number; total_amount: number; payment_status: string; status: string; next_renewal_date: string | null; notes: string | null; customers: { full_name: string } | null };
 const empty = { id: "", customer_id: "", order_date: todaySP(), amount: "", payment_status: "pendente", status: "confirmado", next_renewal_date: "", notes: "" };

@@ -15,7 +15,7 @@ import { dateBR, formatPhoneBR } from "@/lib/format";
 import { normalizePhoneBR } from "@/lib/lead-schema";
 import { waLink } from "@/lib/whatsapp";
 
-export const Route = createFileRoute("/admin/clientes")({ component: Clientes });
+export const Route = createFileRoute("/admin/clientes")({ head: () => ({ meta: [{ title: "Clientes — Choc4lovers" }, { name: "description", content: "Cadastro e consulta de clientes Choc4lovers." }, { property: "og:title", content: "Clientes — Choc4lovers" }, { property: "og:description", content: "Cadastro e consulta de clientes Choc4lovers." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" }] }), component: Clientes });
 
 type C = { id: string; code: string; full_name: string; email: string | null; whatsapp: string | null; city: string | null; state: string | null; notes: string | null; created_at: string };
 const empty = { id: "", full_name: "", email: "", whatsapp: "", city: "", state: "", notes: "" };
