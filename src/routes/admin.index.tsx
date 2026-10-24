@@ -10,7 +10,7 @@ import { LEAD_STATUS } from "@/lib/labels";
 import { brl, dateBR, formatPhoneBR } from "@/lib/format";
 import { waLink } from "@/lib/whatsapp";
 
-export const Route = createFileRoute("/admin/")({ component: Dashboard });
+export const Route = createFileRoute("/admin/")({ head: () => ({ meta: [{ title: "Dashboard — Choc4lovers" }, { name: "description", content: "Leads e indicadores da operação Choc4lovers." }, { property: "og:title", content: "Dashboard — Choc4lovers" }, { property: "og:description", content: "Leads e indicadores da operação Choc4lovers." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" }] }), component: Dashboard });
 
 type Lead = { id: string; code: string; full_name: string; email: string; whatsapp: string; city: string; state: string; budget: number | null; created_at: string; status: string; customer_id: string | null; preferences: string[]; consent_privacy: boolean; consent_marketing: boolean; source: string };
 

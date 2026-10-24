@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { Settings, Heart, Wallet, MessageCircle, RefreshCw, Sparkles, CheckCircle2, Loader2, Mail, Instagram } from "lucide-react";
 import { toast } from "sonner";
 import heroImg from "@/assets/hero-chocolates.jpg";
@@ -18,6 +19,7 @@ import { fetchPublicSettings } from "@/lib/settings";
 import { BR_STATES } from "@/lib/labels";
 import { waLink, leadWhatsAppMessage } from "@/lib/whatsapp";
 import { formatPhoneBR } from "@/lib/format";
+import { COMMERCIAL_WHATSAPP, VISITOR_MESSAGE } from "@/lib/business";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -49,6 +51,7 @@ function Index() {
             <a href="#duvidas" className="hover:text-foreground">Dúvidas</a>
           </nav>
           <div className="flex items-center gap-2">
+            <Button asChild variant="outline" size="sm" className="hidden lg:inline-flex"><a href={waLink(COMMERCIAL_WHATSAPP, VISITOR_MESSAGE) ?? undefined} target="_blank" rel="noreferrer"><MessageCircle />Falar pelo WhatsApp</a></Button>
             <Button asChild variant="cta" size="sm" className="h-9 px-4"><a href="#plano">Monte seu plano</a></Button>
             <Link to="/admin/login" aria-label="Área administrativa" className="rounded-full p-2 text-muted-foreground/60 hover:text-foreground">
               <Settings className="size-4" />
@@ -66,7 +69,7 @@ function Index() {
             <p className="mt-5 text-lg text-cream/85">Conte o que você gosta, quanto quer investir e com que frequência. A equipe Choc4lovers monta a proposta e combina tudo com você pelo WhatsApp.</p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button asChild variant="cta" size="lg"><a href="#plano">Monte seu plano</a></Button>
-              <Button asChild variant="cream" size="lg"><a href="#como-funciona">Como funciona</a></Button>
+              <Button asChild variant="cream" size="lg"><a href={waLink(COMMERCIAL_WHATSAPP, VISITOR_MESSAGE) ?? undefined} target="_blank" rel="noreferrer"><MessageCircle />Falar pelo WhatsApp</a></Button>
             </div>
           </div>
         </div>
@@ -147,10 +150,9 @@ function Index() {
           <div><Logo light /><p className="mt-3 text-sm">Clube de assinatura de chocolates.</p></div>
           <div className="space-y-2 text-sm">
             <p className="font-semibold text-cream">Contato</p>
-            {s.whatsapp_phone && <a className="flex items-center gap-2 hover:text-cream" href={waLink(s.whatsapp_phone) ?? "#"} target="_blank" rel="noreferrer"><MessageCircle className="size-4" />{formatPhoneBR(s.whatsapp_phone)}</a>}
+            <a className="flex items-center gap-2 hover:text-cream" href={waLink(COMMERCIAL_WHATSAPP, VISITOR_MESSAGE) ?? undefined} target="_blank" rel="noreferrer"><MessageCircle className="size-4" />{formatPhoneBR(COMMERCIAL_WHATSAPP)}</a>
             {s.contact_email && <a className="flex items-center gap-2 hover:text-cream" href={`mailto:${s.contact_email}`}><Mail className="size-4" />{s.contact_email}</a>}
             {s.instagram_url && <a className="flex items-center gap-2 hover:text-cream" href={s.instagram_url} target="_blank" rel="noreferrer"><Instagram className="size-4" />Instagram</a>}
-            {!s.whatsapp_phone && !s.contact_email && !s.instagram_url && <p className="text-cream/60">Contatos em breve.</p>}
           </div>
           <div className="space-y-2 text-sm">
             <p className="font-semibold text-cream">Informações</p>
@@ -166,7 +168,10 @@ function Index() {
 type Errors = Partial<Record<string, string>>;
 
 function LeadForm() {
-  const [key] = useState(() => crypto.randomUUID());
+  const [key, setKey] = useState("");
+  const inFlight = useRef(false);
+  const sendLead = useServerFn(submitLead);
+  useEffect(() => { setKey(crypto.randomUUID()); }, []);
   const [f, setF] = useState({
     full_name: "", email: "", whatsapp: "", city: "", state: "", budget: "", frequency: "", quantity: "",
     plan_notes: "", website: "", consent_privacy: false, consent_marketing: false,
@@ -180,34 +185,37 @@ function LeadForm() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (sending) return;
+    if (inFlight.current || !key) return;
     const payload = { ...f, submission_key: key, preferences: prefs, surprise_me: surprise };
     const parsed = leadSchema.safeParse(payload);
     const errs: Errors = {};
     if (!prefs.length && !surprise) errs.preferences = "Escolha ao menos uma preferência";
     if (!parsed.success) parsed.error.issues.forEach((i) => { const k = String(i.path[0]); errs[k] ??= i.message; });
     setErrors(errs);
-    if (Object.keys(errs).length) { toast.error("Confira os campos destacados."); return; }
+    if (Object.keys(errs).length || !parsed.success) { toast.error("Confira os campos destacados."); return; }
+    inFlight.current = true;
     setSending(true);
     try {
-      const res = await submitLead({ data: payload });
-      const msg = leadWhatsAppMessage({ ...parsed.data!, budget: parsed.data!.budget, quantity: f.quantity, code: res.code });
+      const res = await sendLead({ data: payload });
+      const msg = leadWhatsAppMessage({ ...parsed.data, quantity: f.quantity, code: res.code });
       setDone({ ...res, msg });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Erro ao enviar. Tente novamente.");
     } finally {
       setSending(false);
+      inFlight.current = false;
     }
   }
 
   if (done) {
-    const link = done.whatsappPhone ? waLink(done.whatsappPhone, done.msg) : null;
+    const link = waLink(COMMERCIAL_WHATSAPP, done.msg);
     return (
       <div className="mt-8 rounded-3xl bg-card p-8 text-center shadow-lift">
         <CheckCircle2 className="mx-auto size-12 text-success" />
         <h3 className="mt-4 text-2xl font-semibold">Recebemos seu plano!</h3>
         <p className="mt-2 text-muted-foreground">Código da solicitação: <strong className="text-foreground">{done.code}</strong></p>
         <p className="mt-2 text-sm text-muted-foreground">Isto ainda não é uma contratação. Nossa equipe vai confirmar disponibilidade, valor e entrega com você.</p>
+        {done.emailStatus !== "enviado" && <p className="mt-3 text-sm text-muted-foreground">Seu plano está salvo. O aviso por e-mail à equipe está pendente; você pode continuar pelo WhatsApp.</p>}
         {link ? (
           <Button asChild variant="cta" size="lg" className="mt-6"><a href={link} target="_blank" rel="noreferrer"><MessageCircle />Continuar pelo WhatsApp</a></Button>
         ) : (
@@ -310,7 +318,7 @@ function LeadForm() {
         </label>
       </div>
 
-      <Button type="submit" variant="cta" size="lg" className="w-full" disabled={sending}>
+      <Button type="submit" variant="cta" size="lg" className="w-full" disabled={sending || !key}>
         {sending && <Loader2 className="animate-spin" />}Enviar meu plano
       </Button>
     </form>

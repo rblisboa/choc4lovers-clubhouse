@@ -3,17 +3,19 @@ import { useQueryClient } from "@tanstack/react-query";
 import { LayoutDashboard, Users, ShoppingBag, Settings, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Logo } from "@/components/Logo";
+import { Button } from "@/components/ui/button";
+import { isOwnerEmail } from "@/lib/business";
 
 export const Route = createFileRoute("/admin")({
   ssr: false,
   beforeLoad: async () => {
     const { data } = await supabase.auth.getUser();
-    if (!data.user) throw redirect({ to: "/admin/login" });
-    const { data: staff } = await supabase.rpc("is_staff", { _user_id: data.user.id });
-    if (!staff) throw redirect({ to: "/admin/login" });
+    if (!data.user || !isOwnerEmail(data.user.email ?? "")) throw redirect({ to: "/admin/login" });
+    const { data: staff, error } = await supabase.rpc("is_staff", { _user_id: data.user.id });
+    if (error || !staff) throw redirect({ to: "/admin/login" });
     return { userEmail: data.user.email ?? "" };
   },
-  head: () => ({ meta: [{ title: "Painel — Choc4lovers" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Painel — Choc4lovers" }, { name: "description", content: "Administração restrita Choc4lovers." }, { property: "og:title", content: "Painel — Choc4lovers" }, { property: "og:description", content: "Administração restrita Choc4lovers." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" }] }),
   component: AdminLayout,
 });
 
@@ -51,7 +53,7 @@ function AdminLayout() {
       <div className="flex-1">
         <header className="flex items-center justify-end gap-3 border-b border-border bg-card px-6 py-3 text-sm">
           <span className="truncate text-muted-foreground">{userEmail}</span>
-          <button onClick={logout} className="flex items-center gap-1 rounded-full px-3 py-1.5 hover:bg-muted"><LogOut className="size-4" />Sair</button>
+          <Button variant="ghost" size="sm" onClick={logout}><LogOut className="size-4" />Sair</Button>
         </header>
         <main className="p-4 md:p-8"><Outlet /></main>
       </div>
