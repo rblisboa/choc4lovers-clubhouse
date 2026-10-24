@@ -15,3 +15,4 @@
 - Admin email notification uses a server-only adapter; missing sender configuration is recorded as pending in notification_logs, never as sent, and never prevents a committed lead response.
 - Initial administrative signup is restricted by an auth.users insertion trigger with a transaction advisory lock; roles are granted only after email verification and checked against the verified auth email, never profile metadata.
 - Persistent rate limits and database unique keys protect public submissions; browser-generated request IDs are initialized after hydration to avoid losing entered form state.
+- Root owns the sole auth-state subscription, invalidating identity transitions and signaling password recovery to the public reset page; private query caches are cleared before sign-out.

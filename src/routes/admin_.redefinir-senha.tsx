@@ -19,7 +19,10 @@ function Reset() {
   useEffect(() => {
     const recovery = new URLSearchParams(window.location.hash.slice(1)).get("type") === "recovery";
     if (recovery) sessionStorage.setItem("choc-recovery", "true");
-    supabase.auth.getUser().then(({ data }) => setValid(Boolean(data.user) && (recovery || sessionStorage.getItem("choc-recovery") === "true")));
+    const validate = () => { void supabase.auth.getUser().then(({ data }) => setValid(Boolean(data.user) && (recovery || sessionStorage.getItem("choc-recovery") === "true"))); };
+    window.addEventListener("choc-password-recovery", validate);
+    validate();
+    return () => window.removeEventListener("choc-password-recovery", validate);
   }, []);
   const [pw, setPw] = useState("");
   async function onSubmit(e: React.FormEvent) {
