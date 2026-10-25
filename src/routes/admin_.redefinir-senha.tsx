@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { authErrorMessage } from "@/lib/auth-errors";
 
 export const Route = createFileRoute("/admin_/redefinir-senha")({
   ssr: false,
@@ -32,7 +33,7 @@ function Reset() {
     setBusy(true);
     const { error } = await supabase.auth.updateUser({ password: pw });
     setBusy(false);
-    if (error) return toast.error("Link inválido ou expirado.");
+    if (error) return toast.error(authErrorMessage(error, "Não foi possível atualizar. Solicite outro link se ele estiver inválido ou expirado."));
     sessionStorage.removeItem("choc-recovery");
     toast.success("Senha atualizada.");
     nav({ to: "/admin" });

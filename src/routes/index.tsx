@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Settings, Heart, Wallet, MessageCircle, RefreshCw, Sparkles, CheckCircle2, Loader2, Mail, Instagram } from "lucide-react";
+import { Settings, Heart, Wallet, MessageCircle, RefreshCw, Sparkles, CheckCircle2, Loader2, Mail, Instagram, Copy } from "lucide-react";
 import { toast } from "sonner";
 import heroImg from "@/assets/hero-chocolates.jpg";
 import boxImg from "@/assets/box-gift.jpg";
@@ -215,12 +215,21 @@ function LeadForm() {
         <h3 className="mt-4 text-2xl font-semibold">Recebemos seu plano!</h3>
         <p className="mt-2 text-muted-foreground">Código da solicitação: <strong className="text-foreground">{done.code}</strong></p>
         <p className="mt-2 text-sm text-muted-foreground">Isto ainda não é uma contratação. Nossa equipe vai confirmar disponibilidade, valor e entrega com você.</p>
+        <p className="mt-3 text-sm text-muted-foreground">A confirmação por e-mail ao cliente ainda não está disponível. Seu plano foi registrado com o código acima.</p>
         {done.emailStatus !== "enviado" && <p className="mt-3 text-sm text-muted-foreground">Seu plano está salvo. O aviso por e-mail à equipe está pendente; você pode continuar pelo WhatsApp.</p>}
         {link ? (
           <Button asChild variant="cta" size="lg" className="mt-6"><a href={link} target="_blank" rel="noreferrer"><MessageCircle />Continuar pelo WhatsApp</a></Button>
         ) : (
           <p className="mt-6 text-sm text-muted-foreground">Em breve nossa equipe entrará em contato pelo WhatsApp informado.</p>
         )}
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+          <Button asChild variant="outline"><a href={`https://api.whatsapp.com/send?phone=5585998386599&text=${encodeURIComponent(done.msg)}`} target="_blank" rel="noopener noreferrer"><MessageCircle />Abrir WhatsApp Web/app</a></Button>
+          <Button type="button" variant="ghost" onClick={async () => {
+            try { await navigator.clipboard.writeText(done.msg); toast.success("Mensagem copiada."); }
+            catch { toast.error("Não foi possível copiar. Abra o WhatsApp pelo botão de contato."); }
+          }}><Copy />Copiar mensagem</Button>
+        </div>
+        <p className="mt-3 text-sm text-muted-foreground">Contato: {formatPhoneBR(COMMERCIAL_WHATSAPP)}. A mensagem só será enviada quando você confirmar no WhatsApp.</p>
       </div>
     );
   }
