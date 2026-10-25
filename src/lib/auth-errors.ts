@@ -1,4 +1,4 @@
-type AuthFailure = { code?: string; status?: number; message?: string };
+type AuthFailure = { code?: string | undefined; status?: number | undefined; message?: string | undefined };
 
 export function authErrorMessage(error: AuthFailure, fallback: string): string {
   if (error.code === "weak_password" || /known to be weak|easy to guess/i.test(error.message ?? "")) {

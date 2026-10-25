@@ -1,11 +1,12 @@
 # Corrections
-- [ ] Diagnose owner signup/login/reset failure and show actionable authentication errors.
-- [ ] Verify customer WhatsApp opening and offer a usable fallback if opening is blocked.
-- [ ] Clarify customer receipt email dependency and distinguish request from confirmed order.
+- [x] Diagnose owner signup/login/reset failure and show actionable authentication errors.
+- [x] Verify customer WhatsApp opening and offer a usable fallback if opening is blocked.
+- [x] Clarify customer receipt email dependency and distinguish request from confirmed order.
 - [x] Implement exclusive first-admin signup, verified-email role grant, concurrent signup lock and recovery.
 - [x] Restore official commercial WhatsApp links; verify desktop/mobile and personalized saved-lead message.
 - [x] Repair lead submission hydration, safe notification failures and duplicate recovery; verify saved row and replay.
 - [x] Remove Resend; prepare notification contents, honest pending logs and authenticated administrative retry.
 - [x] Verify validation, denied unauthorized signup, denied role writes, private read filtering, public submission and build/tests.
 - [ ] Activate and verify real email notification: requires owner's sending domain setup before sender scaffolding.
+- [ ] Implement and verify customer request receipt email: requires owner's sending domain setup; no order is confirmed by submitting the form.
 - [ ] Verify owner signup/confirmation/login and authenticated dashboard/retry: requires owner choosing a password and confirming email; no owner account has been created during testing.
