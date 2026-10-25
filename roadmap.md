@@ -1,4 +1,7 @@
 # Corrections
+- [ ] Diagnose owner signup/login/reset failure and show actionable authentication errors.
+- [ ] Verify customer WhatsApp opening and offer a usable fallback if opening is blocked.
+- [ ] Clarify customer receipt email dependency and distinguish request from confirmed order.
 - [x] Implement exclusive first-admin signup, verified-email role grant, concurrent signup lock and recovery.
 - [x] Restore official commercial WhatsApp links; verify desktop/mobile and personalized saved-lead message.
 - [x] Repair lead submission hydration, safe notification failures and duplicate recovery; verify saved row and replay.
