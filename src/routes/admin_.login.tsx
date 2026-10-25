@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ADMIN_EMAIL, isOwnerEmail } from "@/lib/business";
 import { firstAccessStatus } from "@/lib/admin-access.functions";
+import { authErrorMessage } from "@/lib/auth-errors";
 
 export const Route = createFileRoute("/admin_/login")({
   ssr: false,
@@ -34,6 +35,7 @@ function Login() {
   const [creating, setCreating] = useState(false);
   const [available, setAvailable] = useState<boolean | null>(null);
   const [notice, setNotice] = useState("");
+  const [failure, setFailure] = useState("");
   useEffect(() => { status().then(r => setAvailable(r.available)).catch(() => setAvailable(false)); }, [status]);
 
   async function onSubmit(e: React.FormEvent) {
@@ -42,36 +44,43 @@ function Login() {
     if (!isOwnerEmail(email)) return toast.error("Este e-mail não está autorizado para acesso administrativo.");
     if (creating && password.length < 8) return toast.error("Use uma senha com pelo menos 8 caracteres.");
     if (creating && password !== confirmPassword) return toast.error("As senhas não coincidem.");
-    setBusy(true); setNotice("");
+    setBusy(true); setNotice(""); setFailure("");
     try {
       if (creating) {
         const current = await status();
         if (!current.available) { setAvailable(false); setCreating(false); throw new Error("A conta já existe. Entre com sua senha ou use a recuperação."); }
         const { data, error } = await supabase.auth.signUp({ email: ADMIN_EMAIL, password, options: { emailRedirectTo: `${window.location.origin}/admin/login` } });
-        if (error) throw new Error("Não foi possível criar o acesso. Se a conta já existe, entre ou recupere sua senha. Confira também os requisitos de segurança da senha.");
+        if (error) throw new Error(authErrorMessage(error, "Não foi possível criar o acesso. Tente novamente; se já possui conta, entre ou recupere sua senha."));
         setPassword(""); setConfirmPassword(""); setCreating(false); setAvailable(false);
         if (!data.session) { setNotice("Acesso criado. Confira seu e-mail e confirme o endereço antes de entrar com a senha escolhida."); return; }
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email: ADMIN_EMAIL, password });
-        if (error) throw new Error("Não foi possível entrar. Confira e-mail e senha e confirme seu endereço pelo link recebido.");
+        if (error) throw new Error(authErrorMessage(error, "Não foi possível entrar. Confira e-mail e senha e confirme seu endereço pelo link recebido."));
       }
       const { data: userData, error: userError } = await supabase.auth.getUser();
       if (userError || !userData.user || !isOwnerEmail(userData.user.email ?? "")) throw new Error("Acesso não autorizado.");
       const { data: staff, error: staffError } = await supabase.rpc("is_staff", { _user_id: userData.user.id });
       if (staffError || !staff) { await supabase.auth.signOut(); throw new Error("Esta conta não tem acesso ao painel."); }
       await nav({ to: "/admin", replace: true });
-    } catch (error) { toast.error(error instanceof Error ? error.message : "Não foi possível concluir. Tente novamente."); }
+    } catch (error) { const message = error instanceof Error ? error.message : "Não foi possível concluir. Tente novamente."; setFailure(message); toast.error(message); }
     finally { setBusy(false); }
   }
 
   async function forgot() {
     if (!isOwnerEmail(email)) return toast.error("Informe o e-mail administrativo autorizado.");
     setBusy(true);
+    setFailure(""); setNotice("");
     try {
+      const current = await status();
+      if (current.available) {
+        setAvailable(true); setCreating(true);
+        setNotice("Ainda não há conta cadastrada. Crie seu primeiro acesso com uma senha exclusiva; depois confirme o e-mail recebido. A recuperação só funciona após criar a conta.");
+        return;
+      }
       const { error } = await supabase.auth.resetPasswordForEmail(ADMIN_EMAIL, { redirectTo: `${window.location.origin}/admin/redefinir-senha` });
       if (error) throw error;
-      toast.success("Se a conta estiver cadastrada, você receberá um link de recuperação.");
-    } catch { toast.error("Não foi possível solicitar a recuperação agora. Tente novamente mais tarde."); }
+      setNotice("Solicitação de recuperação aceita. Verifique a caixa de entrada e o spam. Isso não comprova a entrega do e-mail.");
+    } catch { setFailure("Não foi possível solicitar a recuperação agora. Tente novamente mais tarde."); }
     finally { setBusy(false); }
   }
 
@@ -81,9 +90,11 @@ function Login() {
         <Link to="/"><Logo /></Link>
         <h1 className="mt-6 text-xl font-semibold">{creating ? "Primeiro acesso administrativo" : "Painel administrativo"}</h1>
         {notice && <p role="status" className="mt-4 text-sm text-muted-foreground">{notice}</p>}
+        {failure && <p role="alert" className="mt-4 text-sm text-destructive">{failure}</p>}
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
           <div><Label htmlFor="email">E-mail</Label><Input id="email" type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} required className="mt-1.5" /></div>
           <div><Label htmlFor="pw">Senha</Label><Input id="pw" type="password" autoComplete={creating ? "new-password" : "current-password"} value={password} onChange={e => setPassword(e.target.value)} required minLength={creating ? 8 : undefined} className="mt-1.5" /></div>
+          {creating && <p className="text-sm text-muted-foreground">Use ao menos 8 caracteres. Prefira uma senha longa e exclusiva; senhas comuns ou conhecidas em vazamentos são recusadas.</p>}
           {creating && <div><Label htmlFor="confirm-pw">Confirmar senha</Label><Input id="confirm-pw" type="password" autoComplete="new-password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required className="mt-1.5" /></div>}
           <Button type="submit" disabled={busy} className="w-full">{busy && <Loader2 className="animate-spin" />}{creating ? "Criar acesso administrativo" : "Entrar"}</Button>
           {!creating && <Button type="button" variant="ghost" onClick={forgot} disabled={busy} className="w-full">Esqueci minha senha</Button>}
