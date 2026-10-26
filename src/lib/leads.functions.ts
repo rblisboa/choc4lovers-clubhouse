@@ -7,6 +7,8 @@ export type SubmitLeadResult = {
   code: string;
   whatsappPhone: string;
   emailStatus: "enviado" | "pendente" | "falhou";
+  clientEmailStatus: "enviado" | "pendente" | "falhou";
+  clientEmailTestMode: boolean;
 };
 
 export const submitLead = createServerFn({ method: "POST" })
@@ -50,10 +52,15 @@ export const submitLead = createServerFn({ method: "POST" })
       }
     }
     let emailStatus: SubmitLeadResult["emailStatus"] = "pendente";
+    let clientEmailStatus: SubmitLeadResult["clientEmailStatus"] = "pendente";
     // A notification failure must never turn a committed lead into a failed submission.
     try {
-      const { notifySavedLead } = await import("./notification.server");
+      const { notifySavedLead, sendLeadConfirmationEmail, EMAIL_TEST_MODE } = await import("./notification.server");
       emailStatus = await notifySavedLead(supabaseAdmin, lead);
+      try {
+        clientEmailStatus = await sendLeadConfirmationEmail(supabaseAdmin, lead);
+      } catch { console.error("lead_confirmation_email_failed", { leadId: lead.id }); }
+      return { code: lead.code, whatsappPhone: COMMERCIAL_WHATSAPP, emailStatus, clientEmailStatus, clientEmailTestMode: EMAIL_TEST_MODE };
     } catch { console.error("lead_notification_failed", { leadId: lead.id }); }
-    return { code: lead.code, whatsappPhone: COMMERCIAL_WHATSAPP, emailStatus };
+    return { code: lead.code, whatsappPhone: COMMERCIAL_WHATSAPP, emailStatus, clientEmailStatus, clientEmailTestMode: true };
   });
