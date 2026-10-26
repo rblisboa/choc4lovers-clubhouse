@@ -215,7 +215,12 @@ function LeadForm() {
         <h3 className="mt-4 text-2xl font-semibold">Recebemos seu plano!</h3>
         <p className="mt-2 text-muted-foreground">Código da solicitação: <strong className="text-foreground">{done.code}</strong></p>
         <p className="mt-2 text-sm text-muted-foreground">Isto ainda não é uma contratação. Nossa equipe vai confirmar disponibilidade, valor e entrega com você.</p>
-        <p className="mt-3 text-sm text-muted-foreground">A confirmação por e-mail ao cliente ainda não está disponível. Seu plano foi registrado com o código acima.</p>
+        {done.clientEmailStatus === "enviado" && !done.clientEmailTestMode && (
+          <p className="mt-3 text-sm text-muted-foreground">Enviamos uma confirmação para o seu e-mail com o resumo da solicitação.</p>
+        )}
+        {done.clientEmailStatus === "falhou" && (
+          <p className="mt-3 text-sm text-muted-foreground">Não foi possível enviar o e-mail de confirmação agora, mas sua solicitação está salva com o código acima.</p>
+        )}
         {done.emailStatus !== "enviado" && <p className="mt-3 text-sm text-muted-foreground">Seu plano está salvo. O aviso por e-mail à equipe está pendente; você pode continuar pelo WhatsApp.</p>}
         {link ? (
           <Button asChild variant="cta" size="lg" className="mt-6"><a href={link} target="_blank" rel="noreferrer"><MessageCircle />Continuar pelo WhatsApp</a></Button>
