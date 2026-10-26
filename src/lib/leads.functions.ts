@@ -7,6 +7,8 @@ export type SubmitLeadResult = {
   code: string;
   whatsappPhone: string;
   emailStatus: "enviado" | "pendente" | "falhou";
+  clientEmailStatus: "enviado" | "pendente" | "falhou";
+  clientEmailTestMode: boolean;
 };
 
 export const submitLead = createServerFn({ method: "POST" })
