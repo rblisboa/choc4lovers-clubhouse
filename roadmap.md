@@ -7,6 +7,7 @@
 - [x] Repair lead submission hydration, safe notification failures and duplicate recovery; verify saved row and replay.
 - [x] Remove Resend; prepare notification contents, honest pending logs and authenticated administrative retry.
 - [x] Verify validation, denied unauthorized signup, denied role writes, private read filtering, public submission and build/tests.
-- [ ] Activate and verify real email notification: requires owner's sending domain setup before sender scaffolding.
-- [ ] Implement and verify customer request receipt email: requires owner's sending domain setup; no order is confirmed by submitting the form.
+- [x] Customer request receipt email via Resend (test mode: delivered only to owner's address); verified sent with provider ID in notification_logs.
+- [ ] Admin new-lead alert via Resend: still logged as pending; not yet wired to Resend.
+- [ ] Send receipt email to real customers: requires a verified sending domain in Resend.
 - [ ] Verify owner signup/confirmation/login and authenticated dashboard/retry: requires owner choosing a password and confirming email; no owner account has been created during testing.
