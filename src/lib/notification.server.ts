@@ -61,7 +61,34 @@ export function leadNotificationData(lead: Lead) {
   };
 }
 
-/** No provider is configured for the admin notice: persist an honest pending state, never simulate sending. */
+/** Admin new-lead alert HTML, built only from the saved lead. */
+export function leadAlertEmail(lead: Lead) {
+  const p = leadNotificationData(lead);
+  const row = (label: string, value: string) =>
+    `<tr><td style="padding:6px 12px;color:#6b5b57;font-size:14px;vertical-align:top">${label}</td><td style="padding:6px 12px;font-size:14px;color:#2D1714"><strong>${escapeHtml(value)}</strong></td></tr>`;
+  const html = `
+<div style="font-family:Arial,Helvetica,sans-serif;background:#FFF7F0;padding:24px">
+  <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:16px;padding:28px;border:1px solid #f0e4de">
+    <h1 style="font-size:20px;color:#4A241B;margin:0 0 16px">Novo lead recebido — ${escapeHtml(p.code)}</h1>
+    <table style="border-collapse:collapse;width:100%;background:#FFF7F0;border-radius:12px">
+      ${row("Código", p.code)}
+      ${row("Nome", p.name)}
+      ${row("E-mail", p.email)}
+      ${row("WhatsApp", formatPhoneBR(p.whatsapp))}
+      ${row("Cidade/UF", p.city)}
+      ${row("Preferências", p.preferences || "A definir")}
+      ${row("Orçamento pretendido", p.budget)}
+      ${row("Frequência", p.frequency)}
+      ${row("Quantidade", p.quantity)}
+      ${row("Observações", p.notes)}
+      ${row("Data e horário", p.date)}
+    </table>
+  </div>
+</div>`;
+  return { to: p.to, subject: p.subject, html };
+}
+
+/** Sends the admin alert via Resend after the lead is saved; records the real result, deduped per lead. */
 export async function notifySavedLead(admin: Admin, lead: Lead, retry = false): Promise<EmailStatus> {
   const dedupe = `admin_new_lead:${lead.id}`;
   const { data: existing, error: readError } = await admin.from("notification_logs")
@@ -69,17 +96,30 @@ export async function notifySavedLead(admin: Admin, lead: Lead, retry = false): 
   if (readError) throw new Error("notification_read_failed");
   if (existing?.status === "enviado") return "enviado";
   if (existing && !retry) return existing.status === "falhou" ? "falhou" : "pendente";
-  const payload = leadNotificationData(lead);
-  const row = {
-    kind: "admin_new_lead", recipient: payload.to, related_table: "leads", related_id: lead.id,
-    dedupe_key: dedupe, status: "pendente", attempts: (existing?.attempts ?? 0) + 1,
-    error_detail: "Envio não configurado: falta verificar um domínio próprio de envio.",
-  };
-  const { error } = existing
-    ? await admin.from("notification_logs").update(row).eq("id", existing.id)
-    : await admin.from("notification_logs").upsert(row, { onConflict: "dedupe_key", ignoreDuplicates: true });
+  // Claim the dedupe key before sending so concurrent calls cannot both send.
+  if (!existing) {
+    const { data: claimed, error: claimError } = await admin.from("notification_logs").upsert({
+      kind: "admin_new_lead", recipient: ADMIN_EMAIL, related_table: "leads", related_id: lead.id,
+      dedupe_key: dedupe, status: "pendente", attempts: 0,
+    }, { onConflict: "dedupe_key", ignoreDuplicates: true }).select("id");
+    if (claimError) throw new Error("notification_write_failed");
+    if (!claimed?.length) return "pendente";
+  }
+  const payload = leadAlertEmail(lead);
+  let status: EmailStatus = "enviado";
+  let providerId: string | null = null;
+  let errorDetail: string | null = null;
+  try {
+    providerId = (await sendResendEmail(payload)).id;
+  } catch (err) {
+    status = "falhou";
+    errorDetail = err instanceof Error ? err.message : "send_failed";
+  }
+  const { error } = await admin.from("notification_logs").update({
+    status, attempts: (existing?.attempts ?? 0) + 1, provider_message_id: providerId, error_detail: errorDetail,
+  }).eq("dedupe_key", dedupe);
   if (error) throw new Error("notification_write_failed");
-  return "pendente";
+  return status;
 }
 
 /** Client confirmation email content, built only from the saved lead's real data. */
